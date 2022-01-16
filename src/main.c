@@ -1,7 +1,7 @@
 #include "milis.h"
 #include "stm8s.h" 
 #include "stm8_hd44780.h"
-#include "stm8s_tim1.h"
+//#include "stm8s_tim1.h"
 //#include "stm8s_conf.h"
 //#include "stdio.h"
 //#include "delay.h"
@@ -24,11 +24,36 @@
 char text[16];
 void setup(void);
 void init_tim1(void);
-void process_measurment(void);
+//void process_measurment(void);
 
 uint16_t capture=0; // tady bude aktuální výsledek měření (času)
 uint8_t capture_flag=0; // tady budeme indikovat že v capture je čerstvý výsledek
 uint32_t time = 0;
+
+
+
+int main(void){
+
+ 
+    
+    setup();
+
+    lcd_gotoxy(1,0);
+    lcd_puts("ahoooooooooj");
+
+    while (1) {
+		
+		//delay_ms(200);
+
+		//process_measurment();
+
+		if (milis() - time > 333) {
+            GPIO_WriteReverse(GPIOC,GPIO_PIN_5); 
+            time = milis();
+        }
+    }
+}
+
 
 
 void setup(void){
@@ -54,7 +79,7 @@ void init_tim1(void){
     TIM1_ClearFlag(TIM1_FLAG_CC2); // pro jistotu vyčistíme vlajku signalizující záchyt a změření echo pulzu
     TIM1_Cmd(ENABLE); // spustíme timer ať běží na pozadí
 }
-
+/*
 void process_measurment(void){
     static uint8_t stage=0; // stavový automat
 	static uint16_t time=0; // pro časování pomocí milis
@@ -84,30 +109,7 @@ void process_measurment(void){
 	default: // pokud se cokoli pokazí
 	stage = 0; // začneme znovu od začátku
 	}	
-}
-
-
-
-
-int main(void){
-	
- 
-    
-    setup();
-
-    lcd_gotoxy(1,0);
-    lcd_puts("ahoooooooooj");
-
-    while (1) {
-		
-		//delay_ms(200);
-
-		if (milis() - time > 333) {
-            GPIO_WriteReverse(GPIOC,GPIO_PIN_5); 
-            time = milis();
-        }
-    }
-}
+}*/
 
 
 
