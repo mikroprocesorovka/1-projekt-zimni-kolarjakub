@@ -2,10 +2,14 @@
 #include "stm8s.h" 
 #include "stm8_hd44780.h"
 #include "stm8s_tim1.h"
-#include "stdio.h"  
+//#include "stm8s_conf.h"
+//#include "stdio.h"
+//#include "delay.h"
+  
 
 #define PULSE_LEN 2 // délka spouštěcího (trigger) pulzu pro ultrazvuk
 #define MEASURMENT_PERIOD 100 // perioda měření ultrazvukem (měla by být víc jak (maximální_dosah*2)/rychlost_zvuku)
+
 #define TRIGGER_PIN GPIO_PIN_0
 #define TRIGGER_GPIO GPIOG
 
@@ -24,20 +28,7 @@ void process_measurment(void);
 
 uint16_t capture=0; // tady bude aktuální výsledek měření (času)
 uint8_t capture_flag=0; // tady budeme indikovat že v capture je čerstvý výsledek
-
-
-int main(void){
- 
-    
-    setup();
-
-    lcd_gotoxy(0,0);
-    lcd_puts("ahooooooj");
-
-    while (1) {
-
-    }
-}
+uint32_t time = 0;
 
 
 void setup(void){
@@ -46,7 +37,8 @@ void setup(void){
     init_milis();
 
     GPIO_Init(TRIGGER_GPIO, TRIGGER_PIN, GPIO_MODE_OUT_PP_LOW_SLOW); // výstup - "trigger pulz pro ultrazvuk"
-    //init_tim1(); // nastavit a spustit timer
+	GPIO_Init(GPIOC, GPIO_PIN_5, GPIO_MODE_OUT_PP_LOW_SLOW);
+    init_tim1(); // nastavit a spustit timer
 }
 
 
@@ -93,6 +85,33 @@ void process_measurment(void){
 	stage = 0; // začneme znovu od začátku
 	}	
 }
+
+
+
+
+int main(void){
+	
+ 
+    
+    setup();
+
+    lcd_gotoxy(1,0);
+    lcd_puts("ahoooooooooj");
+
+    while (1) {
+		
+		//delay_ms(200);
+
+		if (milis() - time > 333) {
+            GPIO_WriteReverse(GPIOC,GPIO_PIN_5); 
+            time = milis();
+        }
+    }
+}
+
+
+
+
 
 
 
