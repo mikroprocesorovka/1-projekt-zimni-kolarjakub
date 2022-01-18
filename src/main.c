@@ -45,13 +45,13 @@ int main(void){
 		
 		//delay_ms(200);
 
-		process_measurment();
+		//process_measurment();
 
 		if (milis() - time2 > 333) {
             GPIO_WriteReverse(GPIOC,GPIO_PIN_5); 
             time2 = milis();
-			sprintf(text,"%u",capture);
-    		lcd_gotoxy(0,0);
+			sprintf(text,"length: %5u",capture);
+    		lcd_gotoxy(0,1);
 		    lcd_puts(text);
         }
     }
@@ -65,7 +65,7 @@ void setup(void){
     init_milis();
 
     GPIO_Init(TRIGGER_GPIO, TRIGGER_PIN, GPIO_MODE_OUT_PP_LOW_SLOW); // výstup - "trigger pulz pro ultrazvuk"
-	GPIO_Init(GPIOC, GPIO_PIN_5, GPIO_MODE_OUT_PP_LOW_SLOW);
+	GPIO_Init(GPIOC, GPIO_PIN_5, GPIO_MODE_OUT_PP_HIGH_SLOW);
     init_tim1(); // nastavit a spustit timer
 }
 
@@ -84,35 +84,34 @@ void init_tim1(void){
 }
 
 
-//tady nám to vyhazuje chybu
 void process_measurment(void){
-    static uint8_t stage=0; // stavový automat
+	static uint8_t stage=0; // stavový automat
 	static uint16_t time=0; // pro časování pomocí milis
 	switch(stage){
-		case 0:	// čekáme než uplyne  MEASURMENT_PERIOD abychom odstartovali měření
-			if(milis()-time > MEASURMENT_PERIOD){
-				time = milis(); 
-				GPIO_WriteHigh(TRIGGER_GPIO,TRIGGER_PIN); // zahájíme trigger pulz
-				stage = 1; // a bdueme čekat až uplyne čas trigger pulzu
-			}
-			break;
-		case 1: // čekáme než uplyne PULSE_LEN (generuje trigger pulse)
-			if(milis()-time > PULSE_LEN){
-				GPIO_WriteLow(TRIGGER_GPIO,TRIGGER_PIN); // ukončíme trigger pulz
-				stage = 2; // a přejdeme do fáze kdy očekáváme echo
-			}
-			break;
-		case 2: // čekáme jestli dostaneme odezvu (čekáme na echo)
-			if(TIM1_GetFlagStatus(TIM1_FLAG_CC2) != RESET){ // hlídáme zda timer hlásí změření pulzu
-				capture = TIM1_GetCapture2(); // uložíme výsledek měření
-				capture_flag=1; // dáme vědět zbytku programu že máme nový platný výsledek
-				stage = 0; // a začneme znovu od začátku
-			}else if(milis()-time > MEASURMENT_PERIOD){ // pokud timer nezachytil pulz po dlouhou dobu, tak echo nepřijde
-				stage = 0; // a začneme znovu od začátku
-			}		
-			break;
-		default: // pokud se cokoli pokazí
-			stage = 0; // začneme znovu od začátku
+	case 0:	// čekáme než uplyne  MEASURMENT_PERIOD abychom odstartovali měření
+		if(milis()-time > MEASURMENT_PERIOD){
+			time = milis(); 
+			GPIO_WriteHigh(GPIOC,GPIO_PIN_5); // zahájíme trigger pulz
+			stage = 1; // a bdueme čekat až uplyne čas trigger pulzu
+		}
+		break;
+	case 1: // čekáme než uplyne PULSE_LEN (generuje trigger pulse)
+		if(milis()-time > PULSE_LEN){
+			GPIO_WriteLow(GPIOC,GPIO_PIN_5); // ukončíme trigger pulz
+			stage = 2; // a přejdeme do fáze kdy očekáváme echo
+		}
+		break;
+	case 2: // čekáme jestli dostaneme odezvu (čekáme na echo)
+		if(TIM1_GetFlagStatus(TIM1_FLAG_CC2) != RESET){ // hlídáme zda timer hlásí změření pulzu
+			capture = TIM1_GetCapture2(); // uložíme výsledek měření
+			capture_flag=1; // dáme vědět zbytku programu že máme nový platný výsledek
+			stage = 0; // a začneme znovu od začátku
+		}else if(milis()-time > MEASURMENT_PERIOD){ // pokud timer nezachytil pulz po dlouhou dobu, tak echo nepřijde
+			stage = 0; // a začneme znovu od začátku
+		}		
+		break;
+	default: // pokud se cokoli pokazí
+	stage = 0; // začneme znovu od začátku
 	}	
 }
 
